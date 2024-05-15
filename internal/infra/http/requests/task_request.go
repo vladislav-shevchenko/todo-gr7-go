@@ -8,7 +8,7 @@ import (
 
 type TaskRequest struct {
 	Name        string `json:"name" validate:"required"`
-	Description string `json:"description" validate:"required"`
+	Description string `json:"description"`
 	Deadline    int64  `json:"deadline" validate:"required"`
 }
 

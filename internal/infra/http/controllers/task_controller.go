@@ -7,6 +7,7 @@ import (
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/app"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/domain"
 	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/requests"
+	"github.com/BohdanBoriak/boilerplate-go-back/internal/infra/http/resources"
 )
 
 type TaskController struct {
@@ -38,5 +39,8 @@ func (c TaskController) Save() http.HandlerFunc {
 			return
 		}
 
+		var tDto resources.TaskDto
+		tDto = tDto.DomainToDto(task)
+		Created(w, tDto)
 	}
 }
