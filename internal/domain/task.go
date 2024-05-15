@@ -7,6 +7,7 @@ type Task struct {
 	UserId      uint64
 	Name        string
 	Description string
+	Deadline    time.Time
 	Status      TaskStatus
 	CreatedDate time.Time
 	UpdatedDate time.Time
