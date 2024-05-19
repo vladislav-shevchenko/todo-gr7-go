@@ -21,3 +21,11 @@ const (
 	InProgress TaskStatus = "IN_PROGRESS"
 	Done       TaskStatus = "DONE"
 )
+
+func (status TaskStatus) IsStatusValid() bool {
+	switch status {
+	case New, InProgress, Done:
+		return true
+	}
+	return false
+}

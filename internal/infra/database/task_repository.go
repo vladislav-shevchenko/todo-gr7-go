@@ -23,6 +23,10 @@ type task struct {
 
 type TaskRepository interface {
 	Save(t domain.Task) (domain.Task, error)
+	Edit(t domain.Task) (domain.Task, error)
+	FindById(id uint64, userId uint64) (domain.Task, error)
+	Delete(id uint64, userId uint64) error
+	FindByUser(userId uint64) ([]domain.Task, error)
 }
 
 type taskRepository struct {
@@ -47,6 +51,79 @@ func (r taskRepository) Save(t domain.Task) (domain.Task, error) {
 	}
 	t = r.mapModelToDomain(tsk)
 	return t, nil
+}
+
+func (r taskRepository) Edit(t domain.Task) (domain.Task, error) {
+
+	var tsk task
+	result := r.coll.Find(db.Cond{"id": t.Id, "user_id": t.UserId})
+	err := result.One(&tsk)
+	if err != nil {
+		return domain.Task{}, err
+	}
+
+	if t.Name != "" {
+		tsk.Name = t.Name
+	}
+	if t.Description != "" {
+		tsk.Description = t.Description
+	}
+	if !t.Deadline.IsZero() {
+		tsk.Deadline = t.Deadline
+	}
+	if t.Status != "" && t.Status.IsStatusValid() {
+		tsk.Status = t.Status
+	}
+	tsk.UpdatedDate = time.Now()
+
+	err = result.Update(&tsk)
+	if err != nil {
+		return domain.Task{}, err
+	}
+
+	err = result.One(&tsk)
+	if err != nil {
+		return domain.Task{}, err
+	}
+	return r.mapModelToDomain(tsk), nil
+
+}
+
+func (r taskRepository) FindById(id uint64, userId uint64) (domain.Task, error) {
+	var tsk task
+	err := r.coll.Find(db.Cond{"id": id, "user_id": userId}).One(&tsk)
+	if err != nil {
+		if err == db.ErrNoMoreRows {
+			return domain.Task{}, nil
+		}
+		return domain.Task{}, err
+	}
+	return r.mapModelToDomain(tsk), nil
+}
+
+func (r taskRepository) Delete(id uint64, userId uint64) error {
+	err := r.coll.Find(db.Cond{"id": id, "user_id": userId}).Delete()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r taskRepository) FindByUser(userId uint64) ([]domain.Task, error) {
+	var tasks []task
+	err := r.coll.Find(db.Cond{"user_id": userId}).All(&tasks)
+	if err != nil {
+		if err == db.ErrNoMoreRows {
+			return []domain.Task{}, nil
+		}
+		return []domain.Task{}, err
+	}
+	var domainTasks []domain.Task
+	for _, tsk := range tasks {
+		domainTasks = append(domainTasks, r.mapModelToDomain(tsk))
+	}
+
+	return domainTasks, nil
 }
 
 func (r taskRepository) mapDomainToModel(t domain.Task) task {
